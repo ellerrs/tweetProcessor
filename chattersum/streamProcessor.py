@@ -10,14 +10,10 @@ import json
 from pymongo import MongoClient
 from tendo import singleton
 
-me = singleton.SingleInstance()
-
-client = MongoClient(os.environ['MONGO_HOST'], int(os.environ['MONGO_PORT']))
-client.twitter.authenticate(os.environ['MONGO_USER'], os.environ['MONGO_PASS'], mechanism='MONGODB-CR')
-db = client.twitter
 def log_error(msg):
     timestamp = time.strftime('%Y%m%d:%H%M:%S')
     sys.stderr.write("%s: %s\n" % (timestamp,msg))
+
 
 class StreamWatcherListener(tweepy.StreamListener):
     def on_data(self, data):
@@ -34,16 +30,30 @@ class StreamWatcherListener(tweepy.StreamListener):
     def on_timeout(self):
       log_error("Timeout.")
 
+
 def main():
+
+    me = singleton.SingleInstance()
+
+    mongo_host  	= os.environ['MONGO_HOST']
+    mongo_port 		= int(os.environ['MONGO_PORT'])
+    mongo_user 		= os.environ['MONGO_USER']
+    mongo_pass 		= os.environ['MONGO_PASS']
+    client 		= MongoClient( mongo_host, mongo_port)
+    client.twitter.authenticate( mongo_user, mongo_pass, mechanism='MONGODB-CR')
+    global db
+    db = client.twitter    
+
     consumer_key        = os.environ['TWITTER_CONSUMER_KEY']
     consumer_secret     = os.environ['TWITTER_CONSUMER_SECRET']
     access_token        = os.environ['TWITTER_ACCESS_TOKEN']
     access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
+    
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 
-    listener = StreamWatcherListener()
-    stream = tweepy.Stream(auth, listener)
+    listener 	= StreamWatcherListener()
+    stream 	= tweepy.Stream(auth, listener)
     stream.filter(locations=[-125,24,-60,50])
 
 if __name__ == '__main__':
