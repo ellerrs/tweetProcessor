@@ -29,6 +29,7 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
         
 * Local ENV configuration
     .. code-block:: bash
+    
         # edit the ./env/bin/activate file
         $ vim ./env/bin/activate
         
