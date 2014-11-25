@@ -6,9 +6,14 @@ import datetime
 import sys
 import os
 import json
-
-from pymongo import MongoClient
+import config
 from tendo import singleton
+from pymongo import MongoClient
+
+client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
+client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
+db = client.twitter
+
 
 def log_error(msg):
     timestamp = time.strftime('%Y%m%d:%H%M:%S')
@@ -20,7 +25,6 @@ class StreamWatcherListener(tweepy.StreamListener):
         insert_data = json.loads(data)
         insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
         obj_id = db.a.insert(insert_data)
-	sys.stdout.write(data)
 
     def on_error(self, status_code):
       log_error("Status code: %s." % status_code)
@@ -34,23 +38,9 @@ class StreamWatcherListener(tweepy.StreamListener):
 def main():
 
     me = singleton.SingleInstance()
-
-    mongo_host  	= os.environ['MONGO_HOST']
-    mongo_port 		= int(os.environ['MONGO_PORT'])
-    mongo_user 		= os.environ['MONGO_USER']
-    mongo_pass 		= os.environ['MONGO_PASS']
-    client 		= MongoClient( mongo_host, mongo_port)
-    client.twitter.authenticate( mongo_user, mongo_pass, mechanism='MONGODB-CR')
-    global db
-    db = client.twitter    
-
-    consumer_key        = os.environ['TWITTER_CONSUMER_KEY']
-    consumer_secret     = os.environ['TWITTER_CONSUMER_SECRET']
-    access_token        = os.environ['TWITTER_ACCESS_TOKEN']
-    access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
     
-    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
+    auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
+    auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
 
     listener 	= StreamWatcherListener()
     stream 	= tweepy.Stream(auth, listener)
