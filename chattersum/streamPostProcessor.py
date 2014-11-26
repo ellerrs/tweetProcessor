@@ -19,40 +19,73 @@ db = client.twitter
 
 timedif     = datetime.datetime.now() - datetime.timedelta(hours=0)
 lasthour    = timedif.strftime('%Y%m%d%H')
+filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz'
+
+
+def log_info(msg) :
+    timestamp = time.strftime('%Y%m%d:%H%M:%S')
+    sys.stdout.write("%s: %s\n" % (timestamp,msg))
+
 
 def dumpHourToDisk():
     
-    output  = gzip.open(config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz', 'wb')
-
-    for x in db.a.find({'bucket':lasthour}):
-        output.write(dumps(x))
-        output.write('\n')
-    output.close()
+    records = db.a.find({'bucket':lasthour}).count();
+    
+    if records == 0:
+        log_info("No records found. Not creating a file for %s" % lasthour)
+    else:
+        log_info("Found %s records. Creating file: %s" % (records, filename))
+        output  = gzip.open( filename, 'wb')
+        
+        for x in db.a.find({'bucket':lasthour}):
+            output.write(dumps(x))
+            output.write('\n')
+        output.close()
+        log_info("Saved %s records to %s" % (records, filename))
 
 
 def purgeDisk():
-    os.unlink(config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz')
+
+    if os.path.isfile(filename):
+        log_info("Deleting %s" % filename)
+        os.unlink(filename)
+    else:
+        log_info("%s already deleted" % filename)
 
 
-def pushToS3(cleanDisk=False, cleanDB=False):
-    conn = S3Connection(config.S3AUTH, config.S3KEY)
-    bucket = conn.get_bucket(config.S3BUCKET)
-    key = bucket.new_key(config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz')
-    ikey.set_contents_from_filename(config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz')
+def pushToS3(cleanDisk=True, cleanDB=True):
 
-    if cleanDisk:
-        purgeDisk()
+    if os.path.isfile(filename):
+        conn = S3Connection(config.S3AUTH, config.S3KEY)
+        bucket = conn.get_bucket(config.S3BUCKET)
 
-    if cleanDB:
-        purgeDB()
+        key = bucket.new_key(filename)
+        key.set_contents_from_filename(filename)
+        log_info("Pushing %s to %s" % (filename, config.S3BUCKET))
+
+        if cleanDisk:
+            purgeDisk()
+
+        if cleanDB:
+            purgeDB()
+
+    else:
+        log_info("Nothing to push. %s is missing" % filename)
 
 
 def purgeDB():
+
+    records = db.a.find({'bucket':lasthour}).count();
+    log_info("Removing bucket: %s. Found %s records" % (lasthour, records))
     db.a.remove({'bucket': lasthour})
 
 
 def main():
     me = singleton.SingleInstance()
+
+    dumpHourToDisk()
+    pushToS3()
+
     
 #      for x in db.a.find({'bucket':lasthour}):
 #       words = nltk.word_tokenize(x['text'].encode('ascii', 'ignore'))
