@@ -19,7 +19,6 @@ def log_error(msg):
     timestamp = time.strftime('%Y%m%d:%H%M:%S')
     sys.stderr.write("%s: %s\n" % (timestamp,msg))
 
-
 class StreamWatcherListener(tweepy.StreamListener):
     def on_data(self, data):
         insert_data = json.loads(data)
