@@ -19,7 +19,16 @@ def log_error(msg):
     timestamp = time.strftime('%Y%m%d:%H%M:%S')
     sys.stderr.write("%s: %s\n" % (timestamp,msg))
 
+def log_info(msg):
+    timestamp = time.strftime('%Y%m%d:%H%M:%S')
+    sys.stdout.write("%s: %s\n" % (timestamp,msg))
+
+
 class StreamWatcherListener(tweepy.StreamListener):
+
+    def on_connect(self):
+        log_info("Streaming connected and started")
+
     def on_data(self, data):
         insert_data = json.loads(data)
         insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
@@ -37,13 +46,21 @@ class StreamWatcherListener(tweepy.StreamListener):
 def main():
 
     me = singleton.SingleInstance()
-    
-    auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
-    auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
+    log_info("TweetProcessor started")
 
-    listener 	= StreamWatcherListener()
-    stream 	= tweepy.Stream(auth, listener)
-    stream.filter(locations=[-125,24,-60,50])
+    try: 
+        auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
+        auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
+        log_info("Twitter auth completed")
+    except Exception,e:
+        log_error("Exception: %s" % str(e))
+
+    try: 
+        listener = StreamWatcherListener()
+        stream   = tweepy.Stream(auth, listener)
+        stream.filter(locations=[-125,24,-60,50])
+    except Exception,e:
+        log_error("Exception: %s" % str(e))
 
 if __name__ == '__main__':
     try:

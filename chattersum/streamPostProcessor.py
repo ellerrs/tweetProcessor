@@ -17,7 +17,7 @@ client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
 client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
 db = client.twitter
 
-timedif     = datetime.datetime.now() - datetime.timedelta(hours=0)
+timedif     = datetime.datetime.now() - datetime.timedelta(hours=25)
 lasthour    = timedif.strftime('%Y%m%d%H')
 filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.txt.gz'
 
