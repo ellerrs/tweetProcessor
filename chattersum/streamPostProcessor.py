@@ -1,9 +1,11 @@
 from nltk.corpus import stopwords
 import nltk
+from nltk.util import ngrams
 from boto.s3.connection import S3Connection
 import gzip
 from bson.json_util import dumps
 import tweepy
+import operator
 import time
 import datetime
 import sys
@@ -28,66 +30,58 @@ def log_info(msg) :
 
 
 def dumpHourToDisk():
-    
-    records = db.a.find({'bucket':lasthour}).count();
-    
-    if records == 0:
-        log_info("No records found. Not creating a file for %s" % lasthour)
-    else:
-        log_info("Found %s records. Creating file: %s" % (records, filename))
-        output  = gzip.open( filename, 'wb')
+ 
+    tweetString = []
+   
+    for x in db.hose.find():
+        tweet = x['text'].encode('ascii','ignore').lower()
+	tweetString.append(tweet)
+#	words = nltk.word_tokenize(tweet)
+
+#	stops = stopwords.words('english')
+
+#	workinglist = [word for word in words if word.isalpha() and word not in stops]
+
+#       tokens = [token.lower() for token in newlist if len(token)>2]
+#	bigram = nltk.bigrams(words)
+
+#	trigram = nltk.trigrams(words)
+#	print (dict) trigram
+#	fdist = nltk.FreqDist(list(trigram))
+#	for k,v in fdist.items():
+#	    print k,v 
+#       print list(set(tri_tokens))
+#       print [(item, tri_tokens) for item in sorted(set(tri_tokens))]
+#       print list(grams)
+    string = ' '.join(tweetString)
+
+#    words = nltk.word_tokenize(string)
+    words = string.split(' ')
+
+#    stops = stopwords.words('english')
+
+#    workinglist = [word for word in words if word.isalpha() and word not in stops]
+
+#       tokens = [token.lower() for token in newlist if len(token)>2]
+    bigram = nltk.bigrams(words)
+    trigram = nltk.trigrams(words)
+    quadgram = ngrams(words, 4)
+
+#       print (dict) trigram
+
+    fdist = nltk.FreqDist(list(quadgram))
+    for k,v in sorted(set(fdist.items()), key=operator.itemgetter(1)):
+        print k,v
+
         
-        for x in db.a.find({'bucket':lasthour}):
-            output.write(dumps(x))
-            output.write('\n')
-        output.close()
-        log_info("Saved %s records to %s" % (records, filename))
-
-
-def purgeDisk():
-
-    if os.path.isfile(filename):
-        log_info("Deleting %s" % filename)
-        os.unlink(filename)
-    else:
-        log_info("%s already deleted" % filename)
-
-
-def pushToS3(cleanDisk=True, cleanDB=True):
-
-    if os.path.isfile(filename):
-        conn = S3Connection(config.S3AUTH, config.S3KEY)
-        bucket = conn.get_bucket(config.S3BUCKET)
-
-        key = bucket.new_key(filename)
-        key.set_contents_from_filename(filename)
-        log_info("Pushing %s to %s" % (filename, config.S3BUCKET))
-
-        if cleanDisk:
-            purgeDisk()
-
-        if cleanDB:
-            purgeDB()
-
-    else:
-        log_info("Nothing to push. %s is missing" % filename)
-
-
-def purgeDB():
-
-    records = db.a.find({'bucket':lasthour}).count();
-    log_info("Removing bucket: %s. Found %s records" % (lasthour, records))
-    db.a.remove({'bucket': lasthour})
 
 
 def main():
     me = singleton.SingleInstance()
-
     dumpHourToDisk()
-    pushToS3()
 
     
-#      for x in db.a.find({'bucket':lasthour}):
+#      for x in db.hose.find({'bucket':lasthour}):
 #       words = nltk.word_tokenize(x['text'].encode('ascii', 'ignore'))
 #       stop = stopwords.words('english')
 #       newlist = [w for w in words if w.isalpha() and w not in stop]

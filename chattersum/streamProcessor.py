@@ -32,7 +32,7 @@ class StreamWatcherListener(tweepy.StreamListener):
     def on_data(self, data):
         insert_data = json.loads(data)
         insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
-        obj_id = db.a.insert(insert_data)
+        obj_id = db.hose.insert(insert_data)
 
     def on_error(self, status_code):
       log_error("Status code: %s." % status_code)
