@@ -26,6 +26,10 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
         
         # install the required packages from setup.py
         $ python ./setup.py install
+
+        # install word filters used by nltk
+        $ python -m nltk.downloader all
+
         
 * Local ENV configuration
     .. code-block:: bash
