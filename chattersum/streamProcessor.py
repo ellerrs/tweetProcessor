@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import ngramr
 import tweepy
 import time
 import datetime
@@ -32,7 +32,10 @@ class StreamWatcherListener(tweepy.StreamListener):
     def on_data(self, data):
         insert_data = json.loads(data)
         insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
-        obj_id = db.hose.insert(insert_data)
+	insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+        insert_data['processed'] = False
+        db.hose.insert(insert_data)
+	#ngramr.buildGramsStream(insert_data)
 
     def on_error(self, status_code):
       log_error("Status code: %s." % status_code)
