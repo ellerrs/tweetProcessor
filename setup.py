@@ -16,7 +16,8 @@ requirements = [
     'pymongo>=2.7.0',
     'tendo>=0.0.18',
     'boto>=0.0.1',
-    'nltk>=0.0.1'
+    'nltk>=0.0.1',
+    'zc.lockfile'
 ]
 
 test_requirements = [
