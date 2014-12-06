@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import getopt
+import logging
 import os
 import signal
 import sys
@@ -19,22 +20,41 @@ def main():
         print str(err) # will print something like "option -a not recognized"
         usage()
         sys.exit(2)
+
     output = None
     verbose = False
     for o, a in opts:
+        
         if o == "-v":
             verbose = True
+        
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
+        
         elif o in ("-s", "--start"):
             from streamr import start as streamrStart
-            streamrStart()
+            pid = os.fork()
+            if (pid == 0): # The first child.
+                os.chdir("/")
+                os.setsid()
+                os.umask(0) 
+                pid2 = os.fork() 
+                if (pid2 == 0):  # Second child
+                    streamrStart()
+                else:
+                    sys.exit()    #First child exists
+            else:           # Parent Code
+                sys.exit()   # Parent exists
+        
         elif o in ("-S", "--stop"):
             from streamr import stop as streamrStop
             streamrStop()
+        
         else:
             assert False, "unhandled option"
 
 if __name__ == "__main__":
+
+    logging.basicConfig(filename='chattersum.log', level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     main()

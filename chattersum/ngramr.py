@@ -1,45 +1,47 @@
-from nltk.corpus import stopwords
-import nltk
-from nltk.util import ngrams
-from boto.s3.connection import S3Connection
-import gzip
-from bson.json_util import dumps
-import tweepy
-import operator
-import time
-import datetime
-import sys
-import os
-import json
+
+
 import config
-from tendo import singleton
+import datetime
+import getopt
+import nltk
+from nltk.corpus import stopwords
+from nltk.util import ngrams
+import operator
 from pymongo import MongoClient
+import sys
+import time
+import zc.lockfile
+
 
 client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
 client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
 db = client.twitter
 
+#words = nltk.word_tokenize(text)
+
 def buildGramsStream(tweet):
-    text = tweet['text'].encode('ascii','ignore').lower()
-    timestamp = tweet['timestamp']
-    words = text.split(' ')
-    #words = nltk.word_tokenize(text)
+    
+    text        = tweet['text'].encode('ascii','ignore').lower()
+    timestamp   = tweet['timestamp']
+    words       = text.split(' ')
     buildGrams(words, timestamp)
 
 
-def buildGramsBucket(bucket):
-    tweetString = []
+def buildGramsBucket(hours_ago):
+    
+    timedif     = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
+    lasthour    = timedif.strftime('%Y%m%d%H')
+    
+    for tweet in db.hose.find({'bucket': hours_ago}):
+        text        = tweet['text'].encode('ascii','ignore').lower()
+        timestamp   = tweet['timestamp']
 
-    for x in db.hose.find():
-        tweet = x['text'].encode('ascii','ignore').lower()
-        tweetString.append(tweet)
-
-    string = ' '.join(tweetString)
-    #words = string.split(' ')
-    words = nltk.work_tokenize(string)
+    words = string.split(' ')
+    buildGrams(words, timestamp)
 
 
 def buildGrams(words,timestamp):
+
     stop = stopwords.words('english')
 
     workinglist = [word for word in words if word not in stop and not word.isspace() and len(word)>3]
