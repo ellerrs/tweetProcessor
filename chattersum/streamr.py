@@ -23,7 +23,7 @@ db = client.twitter
 class StreamWatcherListener(tweepy.StreamListener):
 
     def on_connect(self):
-        logging.info('Streaming connected and started')
+        logging.info('streamr: Streaming connected and started')
 
     def on_data(self, data):
         insert_data = json.loads(data)
@@ -33,26 +33,26 @@ class StreamWatcherListener(tweepy.StreamListener):
         db.hose.insert(insert_data)
 
     def on_error(self, status_code):
-        logging.error("Status code: %s." % status_code)
+        logging.error("streamr: Status code: %s." % status_code)
         time.sleep(3)
         return True
 
     def on_timeout(self):
-        logging.error("Timeout.")
+        logging.error("streamr: Timeout.")
 
 
 def start():
 
     lock = zc.lockfile.LockFile('/var/lock/streamr')
-    logging.info("streamr started")
+    logging.info("streamr: streamr started")
 
     try: 
         auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
         auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
-        logging.info("Twitter auth completed")
+        logging.info("streamr: Twitter auth completed")
 
     except Exception,e:
-        logging.critical("Exception: %s" % str(e))
+        logging.critical("streamr: Exception: %s" % str(e))
 
     try: 
         listener = StreamWatcherListener()
@@ -60,12 +60,12 @@ def start():
         stream.filter(locations=[-125,24,-60,50])
 
     except Exception,e:
-        logging.critical("Exception: %s" % str(e))
+        logging.critical("streamr: Exception: %s" % str(e))
 
 
 def stop():
     
-    logging.info("attempting to stop streamr")
+    logging.info("streamr: attempting to stop streamr")
     
     try:
         f = open("/var/lock/streamr", "r")
@@ -74,8 +74,8 @@ def stop():
             os.kill(int(pid), signal.SIGKILL)
             
         os.remove('/var/lock/streamr')
-        logging.info("streamr stopped")
+        logging.info("streamr: streamr stopped")
     
     except Exception, e:
-        logging.error("Exception: %s" % str(e))
+        logging.error("streamr: Exception: %s" % str(e))
 

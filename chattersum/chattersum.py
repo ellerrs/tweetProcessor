@@ -15,16 +15,19 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hsS", ["help", "start", "stop"])  # :v to add arg
+        opts, args = getopt.getopt(sys.argv[1:], "vhsS", ["verbose", "help", "start", "stop"])  # :v to add arg
     except getopt.GetoptError as err:
-        print str(err) # will print something like "option -a not recognized"
+        print str(err) 
         usage()
         sys.exit(2)
 
     output = None
     verbose = False
+    
     for o, a in opts:
-        logging("chattersum: option %s selected" % o)
+
+        logging.info('chattersum: option %s selected' % o)
+        
         if o == "-v":
             verbose = True
         
