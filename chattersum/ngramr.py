@@ -29,15 +29,30 @@ def buildGramsStream(tweet):
 
 def buildGramsBucket(hours_ago):
     
+    # Putting a lock file here to block hourly processing that has gone more than an hour
+
+    lock = zc.lockfile.LockFile('/var/lock/ngramr')
+    logging.info("ngramr: started")
+
     timedif     = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
     lasthour    = timedif.strftime('%Y%m%d%H')
+    logging.info("ngramr: working on hour %s" % lasthour)
     
+    count = db.hose.find({'bucket': hours_ago}).count()
+    logging.info("ngramr: found %s tweets" % count)
+
+    n = 1
+    total_to_process = count
+
     for tweet in db.hose.find({'bucket': hours_ago}):
+        # throwing in a feedback loop so I can watch the log and see progress. 
+        if (n % 10000==0):
+            logging.info("ngramr: processed %s. only %s to go" % (n, (total_to_process - n)))  
+            n = n + 1
         text        = tweet['text'].encode('ascii','ignore').lower()
         timestamp   = tweet['timestamp']
-
-    words = string.split(' ')
-    buildGrams(words, timestamp)
+        words = string.split(' ')
+        buildGrams(words, timestamp)
 
 
 def buildGrams(words,timestamp):
@@ -60,7 +75,7 @@ def buildDistro(xgram, timestamp, gram_length):
     for k,v in sorted(set(distro.items()), key=operator.itemgetter(1)):
         gramString = ' '.join(k)
         query = {'gram': gramString}
-	update = { 
+        update = { 
             '$setOnInsert': {
                 'firstSeen': timestamp,
                 'gram_length': gram_length

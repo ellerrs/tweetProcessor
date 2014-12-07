@@ -24,7 +24,7 @@ def main():
     output = None
     verbose = False
     for o, a in opts:
-        
+        logging("chattersum: option %s selected" % o)
         if o == "-v":
             verbose = True
         
@@ -35,17 +35,17 @@ def main():
         elif o in ("-s", "--start"):
             from streamr import start as streamrStart
             pid = os.fork()
-            if (pid == 0): # The first child.
+            if (pid == 0):          # The first child.
                 os.chdir("/")
                 os.setsid()
                 os.umask(0) 
                 pid2 = os.fork() 
-                if (pid2 == 0):  # Second child
+                if (pid2 == 0):     # Second child
                     streamrStart()
                 else:
-                    sys.exit()    #First child exists
-            else:           # Parent Code
-                sys.exit()   # Parent exists
+                    sys.exit()      #First child
+            else:                   # Parent Code
+                sys.exit()          # Parent exists
         
         elif o in ("-S", "--stop"):
             from streamr import stop as streamrStop

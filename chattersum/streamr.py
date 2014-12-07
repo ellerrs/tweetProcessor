@@ -14,23 +14,10 @@ import tweepy
 import time
 import zc.lockfile
 
-#import ngramr
-
-
 
 client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
 client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
 db = client.twitter
-
-
-def log_error(msg):
-    os.remove('/var/lock/streamr')
-    timestamp = time.strftime('%Y%m%d:%H%M:%S')
-    sys.stderr.write("%s: %s\n" % (timestamp,msg))
-
-def log_info(msg):
-    timestamp = time.strftime('%Y%m%d:%H%M:%S')
-    sys.stdout.write("%s: %s\n" % (timestamp,msg))
 
 
 class StreamWatcherListener(tweepy.StreamListener):
@@ -63,6 +50,7 @@ def start():
         auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
         auth.set_access_token(config.TWITTER_ACCESS_TOKEN, config.TWITTER_ACCESS_TOKEN_SECRET)
         logging.info("Twitter auth completed")
+
     except Exception,e:
         logging.critical("Exception: %s" % str(e))
 
@@ -70,12 +58,15 @@ def start():
         listener = StreamWatcherListener()
         stream   = tweepy.Stream(auth, listener)
         stream.filter(locations=[-125,24,-60,50])
+
     except Exception,e:
         logging.critical("Exception: %s" % str(e))
 
 
 def stop():
+    
     logging.info("attempting to stop streamr")
+    
     try:
         f = open("/var/lock/streamr", "r")
         for line in f:
@@ -84,5 +75,7 @@ def stop():
             
         os.remove('/var/lock/streamr')
         logging.info("streamr stopped")
+    
     except Exception, e:
         logging.error("Exception: %s" % str(e))
+
