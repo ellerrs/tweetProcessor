@@ -20,7 +20,6 @@ import zc.lockfile
 client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
 client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
 db = client.twitter
-
 updated     = 0
 inserted    = 0
 
@@ -35,7 +34,8 @@ def buildGramsStream(tweet):
 
 
 def start():
-    
+    global updated
+    global inserted    
     # Putting a lock file here to block hourly processing that has gone more than an hour
 
     lock = zc.lockfile.LockFile('/var/lock/ngramr')
@@ -45,21 +45,17 @@ def start():
     #lasthour    = timedif.strftime('%Y%m%d%H')
     #logging.info("ngramr: working on hour %s" % lasthour)
 
-    max_to_process = 10000
     while True:
-        count = db.hose.find({'processed': False}).count()
-        if count == 0 :
-            logging.info("ngramr: no tweets to process")
-        else:
-            logging.info("ngramr: found %s tweets to process. Working on the first %s" % (count, max_to_process))
-
-        n = 1
-
-        for tweet in db.hose.find({'processed': False}).limit(max_to_process):
-
+        n = 0
+        for tweet in db.hose.find({'processed': False}):
+            
             # throwing in a feedback loop so I can watch the log and see progress. 
-            if (n % 100==0):
-                logging.debug("ngramr: processed %s. only %s to go" % (n, (count - n)))
+            if (n % 1000==0):
+                count = db.hose.find({'processed': False}).count()
+                if count == 0 :
+                    logging.info("ngramr: no tweets to process")
+                else:
+                    logging.info("ngramr: %s queued for processing" % ( count))
             n = n + 1
 
             text        = tweet['text'].encode('ascii','ignore').lower()
@@ -70,8 +66,10 @@ def start():
             
             db.hose.update({'_id': tweet['_id']},{'$set':{'processed':True}})
         
-        logging.info("ngramr: sleeping for 60 seconds")
-        logging.info("ngramr: u:%s i:%s" % (updated, inserted))
+        logging.info("ngramr: caught up to the stream, sleeping for 60 seconds")
+        logging.info("ngramr: ngram stats - updated:%s inserted:%s" % (updated, inserted))
+        updated = 0
+        inserted = 0
         time.sleep(60) 
 
 
@@ -106,7 +104,8 @@ def buildGrams(words,timestamp):
 
 
 def buildDistro(xgram, timestamp, gram_length):
-    
+    global updated
+    global inserted 
     distro = nltk.FreqDist(list(xgram))
     
     for k,v in sorted(set(distro.items()), key=operator.itemgetter(1)):
@@ -131,9 +130,7 @@ def buildDistro(xgram, timestamp, gram_length):
         }
         r = db.grams.update(query, update, upsert=True)
         if r['updatedExisting']:
-            global updated 
             updated = updated + 1
         else:
-            global inserted
             inserted = inserted + 1
 
