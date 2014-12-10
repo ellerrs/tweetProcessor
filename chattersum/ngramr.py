@@ -47,11 +47,11 @@ def start():
 
     while True:
         n = 0
-        for tweet in db.hose.find({'processed': False}):
+        for tweet in db.hose.find({'processed': 0}):
             
             # throwing in a feedback loop so I can watch the log and see progress. 
-            if (n % 1000==0):
-                count = db.hose.find({'processed': False}).count()
+            if (n % 5000==0):
+                count = db.hose.find({'processed': 0}).count()
                 if count == 0 :
                     logging.info("ngramr: no tweets to process")
                 else:
@@ -64,13 +64,13 @@ def start():
             
             buildGrams(words, timestamp)
             
-            db.hose.update({'_id': tweet['_id']},{'$set':{'processed':True}})
+            db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
         
         logging.info("ngramr: caught up to the stream, sleeping for 60 seconds")
-        logging.info("ngramr: ngram stats - updated:%s inserted:%s" % (updated, inserted))
+        logging.info("ngramr: updated:%s inserted:%s" % (updated, inserted))
         updated = 0
         inserted = 0
-        time.sleep(60) 
+        time.sleep(60)
 
 
 def stop():
