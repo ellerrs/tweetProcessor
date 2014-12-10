@@ -30,7 +30,7 @@ class StreamWatcherListener(tweepy.StreamListener):
         insert_data = json.loads(data)
         insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
         insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-        insert_data['processed'] = False
+        insert_data['processed'] = 0
         db.hose.insert(insert_data)
 
     def on_error(self, status_code):
@@ -45,7 +45,7 @@ class StreamWatcherListener(tweepy.StreamListener):
 def start():
 
     lock = zc.lockfile.LockFile('/var/lock/streamr')
-    logging.info("streamr: streamr started")
+    logging.info("streamr: started")
 
     try: 
         auth = tweepy.OAuthHandler(config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
@@ -75,7 +75,7 @@ def stop():
             os.kill(int(pid), signal.SIGKILL)
             
         os.remove('/var/lock/streamr')
-        logging.info("streamr: streamr stopped")
+        logging.info("streamr: stopped")
     
     except Exception, e:
         logging.error("streamr: Exception: %s" % str(e))
