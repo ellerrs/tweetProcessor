@@ -28,7 +28,7 @@ inserted    = 0
 def buildGramsStream(tweet):
     
     text        = tweet['text'].encode('ascii','ignore').lower()
-    timestamp   = tweet['timestamp']
+    timestamp   = int(tweet['timestamp'])
     words       = text.split(' ')
     buildGrams(words, timestamp)
 
@@ -59,7 +59,7 @@ def start():
             n = n + 1
 
             text        = tweet['text'].encode('ascii','ignore').lower()
-            timestamp   = tweet['timestamp']
+            timestamp   = int(tweet['timestamp'])
             words = text.split(' ')
             
             buildGrams(words, timestamp)
@@ -113,17 +113,17 @@ def buildDistro(xgram, timestamp, gram_length):
         query = {'gram': gramString}
         update = { 
             '$setOnInsert': {
-                'firstSeen': timestamp,
-                'gram_length': gram_length
+                'firstSeen': int(timestamp),
+                'gram_length': int(gram_length)
             }, 
             '$set': {
-                'lastSeen': timestamp
+                'lastSeen': int(timestamp)
             }, 
             '$max': { 'high': v }, 
             '$min': { 'low': v }, 
             '$addToSet': { 
                 'chirps': {
-                    'timestamp': timestamp, 
+                    'timestamp': int(timestamp), 
                     'count': v
                 }
             }
