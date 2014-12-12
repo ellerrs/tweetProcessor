@@ -60,7 +60,7 @@ def start():
             #n = 1
             count = db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}).count()
             if (count > 0):
-                logger.info("grabbing %s tweets from %s" % (count, ordered_buckets['_id']))
+                #logger.info("grabbing %s tweets from %s" % (count, ordered_buckets['_id']))
                 for tweet in db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}, {"text": 1, "timestamp": 1}):
                     #if (n % 1000) == 0:
                     #    to_go = int(count - n)
@@ -74,14 +74,14 @@ def start():
             
                     db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
                     #n = n +1
-        
-                logger.info("tweets in: %s grams up:%s grams in:%s" % (count, updated, inserted))
+                total_grams = (updated + inserted) 
+                logger.info("b:%s t:%s n:%s u:%s %s%% i:%s %s%%" % (ordered_buckets['_id'], count, total_grams, updated, round(float(updated) / float(total_grams) * 100), inserted, round( float(inserted) / float(total_grams) * 100)))
                 updated = 0
                 inserted = 0
             else:
                 logger.info("caught up %s" % ordered_buckets['_id'])
 
-            time.sleep(30)
+            time.sleep(60)
 
 
 def stop():
