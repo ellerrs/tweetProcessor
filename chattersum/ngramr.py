@@ -5,6 +5,7 @@ import config
 import datetime
 import getopt
 import logging
+import logging.config
 import nltk
 from nltk.corpus import stopwords
 from nltk.util import ngrams
@@ -20,6 +21,10 @@ import zc.lockfile
 client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
 client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
 db = client.twitter
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('ngramr')
+
 updated     = 0
 inserted    = 0
 
@@ -38,44 +43,50 @@ def start():
     global inserted    
     # Putting a lock file here to block hourly processing that has gone more than an hour
 
-    lock = zc.lockfile.LockFile('/var/lock/ngramr')
-    logging.info("ngramr: started")
+    try:
+        lock = zc.lockfile.LockFile('/var/lock/ngramr')
+        logger.info("started")
+
+    except Exception,e:
+        logger.warning("another ngramr running")
+        sys.exit()
 
     #timedif     = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
     #lasthour    = timedif.strftime('%Y%m%d%H')
-    #logging.info("ngramr: working on hour %s" % lasthour)
+    #logger.info("working on hour %s" % lasthour)
 
     while True:
-        n = 0
-        for tweet in db.hose.find({'processed': 0}):
-            
-            # throwing in a feedback loop so I can watch the log and see progress. 
-            if (n % 5000==0):
-                count = db.hose.find({'processed': 0}).count()
-                if count == 0 :
-                    logging.info("ngramr: no tweets to process")
-                else:
-                    logging.info("ngramr: %s queued for processing" % ( count))
-            n = n + 1
+        for ordered_buckets in db.buckets.find({"unprocessed": {"$gt": 0}}).sort([('_id', 1)]):
+            #n = 1
+            count = db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}).count()
+            if (count > 0):
+                logger.info("grabbing %s tweets from %s" % (count, ordered_buckets['_id']))
+                for tweet in db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}, {"text": 1, "timestamp": 1}):
+                    #if (n % 1000) == 0:
+                    #    to_go = int(count - n)
+                    #    logger.info("working on %s... %s to go" % (ordered_buckets['_id'], to_go))
 
-            text        = tweet['text'].encode('ascii','ignore').lower()
-            timestamp   = int(tweet['timestamp'])
-            words = text.split(' ')
+                    text        = tweet['text'].encode('ascii','ignore').lower()
+                    timestamp   = int(tweet['timestamp'])
+                    words = text.split(' ')
             
-            buildGrams(words, timestamp)
+                    buildGrams(words, timestamp)
             
-            db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
+                    db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
+                    #n = n +1
         
-        logging.info("ngramr: caught up to the stream, sleeping for 60 seconds")
-        logging.info("ngramr: updated:%s inserted:%s" % (updated, inserted))
-        updated = 0
-        inserted = 0
-        time.sleep(60)
+                logger.info("tweets in: %s grams up:%s grams in:%s" % (count, updated, inserted))
+                updated = 0
+                inserted = 0
+            else:
+                logger.info("caught up %s" % ordered_buckets['_id'])
+
+            time.sleep(30)
 
 
 def stop():
     
-    logging.info("streamr: attempting to stop ngramr")
+    logger.info("attempting to stop ngramr")
     
     try:
         f = open("/var/lock/ngramr", "r")
@@ -84,10 +95,10 @@ def stop():
             os.kill(int(pid), signal.SIGKILL)
             
         os.remove('/var/lock/ngramr')
-        logging.info("ngramr: ngramr stopped")
+        logger.info("ngramr stopped")
     
     except Exception, e:
-        logging.error("ngramr: Exception: %s" % str(e))
+        logger.error("Exception: %s" % str(e))
 
 
 def buildGrams(words,timestamp):
@@ -117,7 +128,8 @@ def buildDistro(xgram, timestamp, gram_length):
                 'gram_length': int(gram_length)
             }, 
             '$set': {
-                'lastSeen': int(timestamp)
+                'lastSeen': int(timestamp),
+                'expireTime': datetime.datetime.utcnow()
             }, 
             '$max': { 'high': v }, 
             '$min': { 'low': v }, 

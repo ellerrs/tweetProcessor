@@ -4,6 +4,7 @@
 from cleanr import stop as cleanrStop
 import getopt
 import logging
+import logging.config
 from ngramr import stop as ngramrStop
 import os
 import signal
@@ -28,6 +29,7 @@ def usage():
 def getHour(hours_ago):
     timedif     = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
     return timedif.strftime('%Y%m%d%H')
+
 
 def streamrStart():
     from streamr import start
@@ -87,7 +89,7 @@ def main():
     
     for o, a in opts:
 
-        logging.info('chattersum: option %s selected' % o)
+        logger.info('option %s %s selected' % (o, a))
         
         if o == "-v":
             verbose = True
@@ -119,9 +121,15 @@ def main():
                 sys.exit()
 
             elif a == "ngramr":
-                mgramrStop()
+                ngramrStop()
                 time.sleep(5)
                 ngramrStart()
+                sys.exit()
+
+            elif a == "cleanr":
+                cleanrStop()
+                time.sleep(5)
+                cleanrStart()
                 sys.exit()
 
             else:
@@ -160,6 +168,8 @@ def main():
             assert False, "unhandled option"
 
 if __name__ == "__main__":
-
-    logging.basicConfig(filename='/var/log/chattersum.log', level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    logging.config.fileConfig('logging.conf')
+    logger = logging.getLogger('chattersum')
+    #logging.basicConfig(filename='/var/log/chattersum.log', level=logging.INFO, format='%(asctime)s %(name)s %(levelname)s %(message)s')
     main()
