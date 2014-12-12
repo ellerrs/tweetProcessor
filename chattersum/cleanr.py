@@ -30,9 +30,13 @@ def start():
     global updated
     global inserted    
     # Putting a lock file here to block hourly processing that has gone more than an hour
+    try:
+        lock = zc.lockfile.LockFile('/var/lock/cleanr')
+        logger.info("started")
 
-    lock = zc.lockfile.LockFile('/var/lock/cleanr')
-    logger.info("started")
+    except Exception,e:
+        logger.warning("another cleanr running")
+        sys.exit()
 
     while True:
 
