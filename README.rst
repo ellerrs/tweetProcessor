@@ -73,7 +73,7 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
         db.hose.ensureIndex({"bucket": 1});
 
         // create user for app
-        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "readWrite",                                               db: "<database>"}]})
+        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "readWrite", db: "<database>"}]})
 
         // create root mongo user
-        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "root", db: "                                              admin" }]})
+        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "root", db: "admin" }]})
