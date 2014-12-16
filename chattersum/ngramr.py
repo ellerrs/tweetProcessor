@@ -125,12 +125,13 @@ def buildDistro(xgram, timestamp, gram_length):
         update = { 
             '$setOnInsert': {
                 'firstSeen': int(timestamp),
-                'gram_length': int(gram_length)
+                'gram_length': int(gram_length),
             }, 
             '$set': {
                 'lastSeen': int(timestamp),
                 'expireTime': datetime.datetime.utcnow()
-            }, 
+            },
+            '$inc': { 'chirpCount': 1}, 
             '$max': { 'high': v }, 
             '$min': { 'low': v }, 
             '$addToSet': { 
