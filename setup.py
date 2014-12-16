@@ -9,15 +9,16 @@ except ImportError:
 
 
 readme = open('README.rst').read()
-history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     'tweepy>=2.1',
-    'pymongo>=2.7.0',
+    'pymongo>=2.8.0',
     'tendo>=0.0.18',
     'boto>=0.0.1',
     'nltk>=0.0.1',
-    'zc.lockfile'
+    'zc.lockfile>=0.0.1',
+    'flask>=0.0.1',
+    'flask-bootstrap>=0.0.1'
 ]
 
 test_requirements = [
