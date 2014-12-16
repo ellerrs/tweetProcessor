@@ -57,3 +57,23 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
         export S3AUTH=
         export S3KEY=
         export S3BUCKET=
+
+* Mongodb --stuff--
+    .. code-block:: bash
+    
+        db.createCollection('hose');
+        db.createCollection('grams');
+        db.createCollection('buckets');
+
+        db.grams.ensureIndex({"gram": 1});
+        db.grams.ensureIndex({"lastSeen": 1, "high": 1});
+        db.grams.ensureIndex({"expireTime": 1}, { expireAfterSeconds: 300});
+
+        db.hose.ensureIndex({"processed": 1});
+        db.hose.ensureIndex({"bucket": 1});
+
+        // create user for app
+        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "readWrite",                                               db: "<database>"}]})
+
+        // create root mongo user
+        db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "root", db: "                                              admin" }]})
