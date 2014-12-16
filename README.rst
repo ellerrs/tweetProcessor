@@ -29,6 +29,9 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
 
         # install word filters used by nltk
         $ python -m nltk.downloader all
+        
+        # new version of pymongo 2.8
+        $ pip install git+git://github.com/mongodb/mongo-python-driver.git@2.8rc0
 
         
 * Local ENV configuration
