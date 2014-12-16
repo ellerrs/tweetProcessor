@@ -17,8 +17,7 @@ import time
 import zc.lockfile
 
 
-client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
-client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
+client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
 db = client.twitter
 
 logging.config.fileConfig('logging.conf')

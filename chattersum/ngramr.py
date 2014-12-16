@@ -18,8 +18,7 @@ import time
 import zc.lockfile
 
 
-client = MongoClient( config.MONGO_HOST, config.MONGO_PORT)
-client.twitter.authenticate( config.MONGO_USER, config.MONGO_PASS, mechanism='MONGODB-CR')
+client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
 db = client.twitter
 
 logging.config.fileConfig('logging.conf')
@@ -57,14 +56,14 @@ def start():
 
     while True:
         for ordered_buckets in db.buckets.find({"unprocessed": {"$gt": 0}}).sort([('_id', 1)]):
-            #n = 1
+            n = 1
             count = db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}).count()
             if (count > 0):
-                #logger.info("grabbing %s tweets from %s" % (count, ordered_buckets['_id']))
+                logger.info("grabbing %s tweets from %s" % (count, ordered_buckets['_id']))
                 for tweet in db.hose.find({'processed': 0, 'bucket': ordered_buckets['_id']}, {"text": 1, "timestamp": 1}):
-                    #if (n % 1000) == 0:
-                    #    to_go = int(count - n)
-                    #    logger.info("working on %s... %s to go" % (ordered_buckets['_id'], to_go))
+                    if (n % 1000) == 0:
+                        to_go = int(count - n)
+                        logger.info("working on %s... %s to go" % (ordered_buckets['_id'], to_go))
 
                     text        = tweet['text'].encode('ascii','ignore').lower()
                     timestamp   = int(tweet['timestamp'])
@@ -73,7 +72,8 @@ def start():
                     buildGrams(words, timestamp)
             
                     db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
-                    #n = n +1
+                    n = n + 1
+
                 total_grams = (updated + inserted) 
                 logger.info("b:%s t:%s n:%s u:%s %s%% i:%s %s%%" % (ordered_buckets['_id'], count, total_grams, updated, round(float(updated) / float(total_grams) * 100), inserted, round( float(inserted) / float(total_grams) * 100)))
                 updated = 0
@@ -107,7 +107,7 @@ def buildGrams(words,timestamp):
 
     workinglist = [word for word in words if word not in stop and not word.isspace() and len(word)>3]
     if len(workinglist)>0:
-        x = 1
+        x = 2
         while (x <= 4):
             xgram = ngrams(workinglist, x)
             buildDistro(xgram, timestamp, x)

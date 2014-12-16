@@ -12,6 +12,7 @@ from streamr import stop as streamrStop
 import sys
 import time
 
+
 def usage():
     print "usage: ./chattersum.py [option] [arg] ..."
     print "Options and arguments (and corresponding environment variables):"
