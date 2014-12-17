@@ -21,7 +21,24 @@ import zc.lockfile
 client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
 db = client.twitter 
 
+logging.getLogger('boto').setLevel(logging.CRITICAL)
 logger = logging.getLogger('cleanr')
+
+
+def health():
+    try:
+        f = open("/var/lock/cleanr", "r")
+        for line in f:
+            pid = line.strip()
+            try:
+                os.kill(int(pid), 0)
+            except OSError:
+                return False
+            else:
+                return True
+    except:
+        return False
+
 
 def start():
     global updated
@@ -34,8 +51,6 @@ def start():
     except Exception,e:
         logger.warning("another cleanr running")
         sys.exit()
-
-    pushToS3()
 
     while True:
 
@@ -84,19 +99,9 @@ def dumpHourToDisk(hour, filename):
         logger.info("No records found. Not creating a file for %s" % hour)
     else:
         logger.info("Found %s records. Creating file: %s" % (records, filename))
-        output  = gzip.open( config.TWITTER_FILE_PATH + 'temp' , 'wb')
-        while (db.hose.find({'bucket':hour}).count() > 0):
-            for x in db.hose.find({'bucket':hour}).limit(5000):
-                output.write(dumps(x))
-                output.write('\n')
-                db.hose.remove({'_id': x['_id']})
-            
-            logger.info("Saved 5000 to file")
-            time.sleep(10)
-
-        output.close()
-
-        os.rename( config.TWITTER_FILE_PATH + 'temp', config.TWITTER_FILE_PATH + '' + filename)
+        systemCall = "mongoexport --quiet --username shane --password [th@n@t0s] --authenticationDatabase admin --db twitter --collection hose --query '{\"bucket\":\"" + hour + "\"}' | gzip > " + filename
+        os.system(systemCall)
+        db.hose.remove({'bucket': hour})
         logger.info("saved %s records to %s" % (records, filename))
 
 

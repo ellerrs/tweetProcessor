@@ -60,9 +60,7 @@ def start():
                     text        = tweet['text'].encode('ascii','ignore').lower()
                     timestamp   = int(tweet['timestamp'])
                     words = text.split(' ')
-            
                     buildGrams(words, timestamp)
-            
                     db.hose.update({'_id': tweet['_id']},{'$set':{'processed': 1}})
                     n = n + 1
 
@@ -93,8 +91,23 @@ def stop():
         logger.error("Exception: %s" % str(e))
 
 
-def buildGrams(words,timestamp):
+def health():
+    try: 
+        f = open("/var/lock/ngramr", "r")
+        for line in f:
+            pid = line.strip()
+            logger.info(pid)
+            try:
+                os.kill(int(pid), 0)
+            except OSError:
+                return False
+            else:
+                return True
+    except:
+        return False
 
+
+def buildGrams(words,timestamp):
     stop = stopwords.words('english')
 
     workinglist = [word for word in words if word not in stop and not word.isspace() and len(word)>3]
@@ -110,7 +123,6 @@ def buildDistro(xgram, timestamp, gram_length):
     global updated
     global inserted 
     distro = nltk.FreqDist(list(xgram))
-    
     for k,v in sorted(set(distro.items()), key=operator.itemgetter(1)):
         gramString = ' '.join(k)
         query = {'gram': gramString}

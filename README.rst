@@ -28,6 +28,7 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
         $ python ./setup.py install
 
         # install word filters used by nltk
+        # files can go in your path, or /usr/lib/nltk_data
         $ python -m nltk.downloader all
         
         # new version of pymongo 2.8

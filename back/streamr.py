@@ -43,6 +43,21 @@ class StreamWatcherListener(tweepy.StreamListener):
         logger.error("Timeout.")
 
 
+def health():
+    try:
+        f = open("/var/lock/streamr", "r")
+        for line in f:
+            pid = line.strip()
+            try:
+                os.kill(int(pid), 0)
+            except OSError:
+                return False
+            else:
+                return True
+    except:
+        return False
+
+
 def start():
 
     try: 

@@ -9,7 +9,6 @@ import signal
 import sys
 import time
 
-
 def usage():
     print "usage: ./chattersum.py [option] [arg] ..."
     print "Options and arguments (and corresponding environment variables):"
@@ -18,11 +17,36 @@ def usage():
     print "-a, --startAll         : start the streamr and ngramr services"
     print "-A, --stopAll          : stop the streamr and ngramr services"
     print "-h, --help             : show this"
+    print "-H, --health           : healthcheck services"
     print "-r, --restart service  : restart the selected service. example: --restart ngramr"
     print "-s, --start service    : start the requested service. example: --start streamr"
     print "-S, --stop  service    : stop the requested service. example: --stop streamr"
     print "-v, --verbose          : crank verbosity to maximum. (this if funny if you've played Zork)"
-    
+
+def healthCheck():        
+
+    from ngramr import health as nh
+    if(nh()):
+        logger.info("ngramr UP")
+    else:
+        logger.info("ngramr DOWN - restarting")
+        ngramrStart()
+
+    from cleanr import health as ch
+    if(ch()):
+        logger.info("cleanr UP")
+    else:
+        logger.info("cleanr DOWN - restarting")
+        cleanrStart()
+
+    from streamr import health as sh
+    if(sh()):
+        logger.info("streamr UP")
+    else:
+        logger.info("streamr DOWN - restarting")
+        streamrStart()
+    sys.exit()
+
 
 def getHour(hours_ago):
     timedif     = datetime.datetime.now() - datetime.timedelta(hours=hours_ago)
@@ -87,7 +111,7 @@ def cleanrStart():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "aAhr:s:S:v", ["startAll", "stopAll", "help", "restart=", "start=", "stop=", "verbose"])  # :v to add arg
+        opts, args = getopt.getopt(sys.argv[1:], "aAhHr:s:S:viz", ["startAll", "stopAll", "help", "health", "restart=", "start=", "stop=", "verbose", "zork"])  # :v to add arg
     except getopt.GetoptError as err:
         print str(err) 
         usage()
@@ -117,7 +141,10 @@ def main():
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
-        
+       
+        elif o in ("-H", "--health"):
+            healthCheck()
+ 
         elif o in ("-r", "--restart"):
             if a == "streamr":
                 streamrStop()
@@ -165,7 +192,7 @@ def main():
 
             elif a == "cleanr":
                 cleanrStop()
-        
+
         else:
             assert False, "unhandled option"
 
