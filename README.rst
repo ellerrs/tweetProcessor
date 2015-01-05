@@ -61,15 +61,14 @@ Yes, there are some. Very likely there will be more. Or not. Its hard to tell.
 
 * Mongodb --stuff--
     .. code-block:: bash
-    
+
+        use twitter;    
         db.createCollection('hose');
         db.createCollection('grams');
         db.createCollection('buckets');
-
         db.grams.ensureIndex({"gram": 1});
         db.grams.ensureIndex({"lastSeen": 1, "high": 1});
         db.grams.ensureIndex({"expireTime": 1}, { expireAfterSeconds: 300});
-
         db.hose.ensureIndex({"processed": 1});
         db.hose.ensureIndex({"bucket": 1});
 

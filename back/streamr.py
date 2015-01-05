@@ -83,6 +83,8 @@ def start():
 
     except Exception,e:
         logger.critical("Exception: %s" % str(e))
+        time.sleep(10)
+        start()
 
 
 def stop():

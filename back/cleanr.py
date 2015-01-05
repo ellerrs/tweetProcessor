@@ -63,10 +63,16 @@ def start():
             if ((x['unprocessed'] == 0) and (x['_id'] <> lasthour )):
                 logger.info("bucket %s ready " % x['_id'])
 
+                logger.info("force stopping")
+                os.system("/home/shane/projects/tweetProcessor/env/bin/python /home/shane/projects/tweetProcessor/back/service.py --stop ngramr")
+                
                 filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
                 s3filename = config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
                 dumpHourToDisk(x['_id'], filename)
                 pushToS3()
+
+                logger.info("force starting")
+                os.system("/home/shane/projects/tweetProcessor/env/bin/python /home/shane/projects/tweetProcessor/back/service.py --start ngramr")
 
             else:
                 logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
@@ -99,7 +105,7 @@ def dumpHourToDisk(hour, filename):
         logger.info("No records found. Not creating a file for %s" % hour)
     else:
         logger.info("Found %s records. Creating file: %s" % (records, filename))
-        systemCall = "mongoexport --quiet --username shane --password [th@n@t0s] --authenticationDatabase admin --db twitter --collection hose --query '{\"bucket\":\"" + hour + "\"}' | gzip > " + filename
+        systemCall = "mongoexport --quiet --username " + config.MONGO_USER + " --password " + config.MONGO_PASS + " --authenticationDatabase " + config.MONGO_DB + " --db " + config.MONGO_DB + " --collection hose --query '{\"bucket\":\"" + hour + "\"}' | gzip > " + filename
         os.system(systemCall)
         db.hose.remove({'bucket': hour})
         logger.info("saved %s records to %s" % (records, filename))
