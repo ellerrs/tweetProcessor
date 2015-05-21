@@ -39,7 +39,7 @@ def start():
     global inserted    
 
     try:
-        lock = zc.lockfile.LockFile('/var/lock/ngramr')
+        zc.lockfile.LockFile('/var/lock/ngramr')
         logger.info("started")
     except LockError:
         logger.warning("another ngramr running")
