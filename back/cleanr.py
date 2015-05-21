@@ -45,12 +45,12 @@ def start():
     global inserted    
 
     try:
-        lock = zc.lockfile.LockFile('/var/lock/cleanr')
+        zc.lockfile.LockFile('/var/lock/cleanr')
         logger.info("started")
-
-    except Exception,e:
+    except LockError:
         logger.warning("another cleanr running")
         sys.exit()
+
 
     while True:
 
