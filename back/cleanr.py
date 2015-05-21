@@ -63,21 +63,23 @@ def start():
             if ((x['unprocessed'] == 0) and (x['_id'] <> lasthour )):
                 logger.info("bucket %s ready " % x['_id'])
 
-                logger.info("force stopping")
-                os.system("/home/shane/projects/tweetProcessor/env/bin/python /home/shane/projects/tweetProcessor/back/service.py --stop ngramr")
-                
+                from ngramr import stop as ngstop
+		ngstop()
+                zc.lockfile.LockFile('/var/lock/ngramr')
+ 
                 filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
                 s3filename = config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
                 dumpHourToDisk(x['_id'], filename)
                 pushToS3()
 
-                logger.info("force starting")
-                os.system("/home/shane/projects/tweetProcessor/env/bin/python /home/shane/projects/tweetProcessor/back/service.py --start ngramr")
 
             else:
                 logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
+        logger.info("clearing lock on ngramr")
+
+	os.remove('/var/lock/ngramr')
         time.sleep(600) 
 
 def stop():

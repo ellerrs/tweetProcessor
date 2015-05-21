@@ -29,10 +29,14 @@ class StreamWatcherListener(tweepy.StreamListener):
 
     def on_data(self, data):
         insert_data = json.loads(data)
-        insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
-        insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-        insert_data['processed'] = 0
-        db.hose.insert(insert_data)
+        if 'created_at' in insert_data:
+	    insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
+            insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+            insert_data['processed'] = 0
+            db.hose.insert(insert_data)
+	else:
+            pass
+# 	    logger.info(data)
 
     def on_error(self, status_code):
         logger.error("Status code: %s." % status_code)
