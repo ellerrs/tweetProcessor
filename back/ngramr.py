@@ -41,8 +41,7 @@ def start():
     try:
         lock = zc.lockfile.LockFile('/var/lock/ngramr')
         logger.info("started")
-
-    except Exception,e:
+    except LockError:
         logger.warning("another ngramr running")
         sys.exit()
 

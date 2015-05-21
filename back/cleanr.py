@@ -72,14 +72,14 @@ def start():
                 dumpHourToDisk(x['_id'], filename)
                 pushToS3()
 
+                logger.info("clearing lock on ngramr")
+                os.remove('/var/lock/ngramr')
+
 
             else:
                 logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
-        logger.info("clearing lock on ngramr")
-
-        os.remove('/var/lock/ngramr')
         time.sleep(600) 
 
 def stop():
