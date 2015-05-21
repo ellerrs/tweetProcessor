@@ -67,33 +67,28 @@ def cleanrStop():
 def streamrStart():
     from streamr import start
     pid = os.fork()
-    if (pid == 0):          # The first child.
+    if (pid == 0):
         os.chdir("/")
         os.setsid()
         os.umask(0)
         pid2 = os.fork()
-        if (pid2 == 0):     # Second child
+        if (pid2 == 0):
             start()
         else:
-            sys.exit()      #First child
-#    else:                   # Parent Code
-#        sys.exit()          # Parent exists
-
+            sys.exit()
 
 def ngramrStart():
     from ngramr import start
     pid = os.fork()
-    if (pid == 0):          # The first child.
+    if (pid == 0): 
         os.chdir("/")
         os.setsid()
         os.umask(0)
         pid2 = os.fork()
-        if (pid2 == 0):     # Second child
+        if (pid2 == 0):
             start()
         else:
-            sys.exit()      #First child
- #   else:                   # Parent Code
- #       sys.exit()          # Parent exists
+            sys.exit() 
 
 def cleanrStart():
     from cleanr import start

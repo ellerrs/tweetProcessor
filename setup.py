@@ -29,7 +29,6 @@ setup(
     name='chattersum',
     version='0.1.0',
     description='test',
-    long_description=readme + '\n\n' + history,
     author='Shane Eller',
     author_email='shane.eller@gmail.com',
     url='https://github.com/ellerrs/chattersum',
@@ -55,6 +54,5 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    test_suite='tests',
-    tests_require=test_requirements
+    test_suite='tests'
 )

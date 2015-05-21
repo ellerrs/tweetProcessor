@@ -64,7 +64,7 @@ def start():
                 logger.info("bucket %s ready " % x['_id'])
 
                 from ngramr import stop as ngstop
-		ngstop()
+                ngstop()
                 zc.lockfile.LockFile('/var/lock/ngramr')
  
                 filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
@@ -79,7 +79,7 @@ def start():
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
         logger.info("clearing lock on ngramr")
 
-	os.remove('/var/lock/ngramr')
+        os.remove('/var/lock/ngramr')
         time.sleep(600) 
 
 def stop():
