@@ -47,7 +47,7 @@ def start():
     try:
         zc.lockfile.LockFile('/var/lock/cleanr')
         logger.info("started")
-    except LockError:
+    except:
         logger.warning("another cleanr running")
         sys.exit()
 
