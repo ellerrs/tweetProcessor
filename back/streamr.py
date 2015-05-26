@@ -8,17 +8,15 @@ import json
 import logging
 import logging.config
 import os
-from pymongo import MongoClient
 import signal
 import sys
-from tendo import singleton
 import tweepy
 import time
 import zc.lockfile
 
 
-client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
-db = client.twitter
+#client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
+#db = client.twitter
 
 logger = logging.getLogger('streamr')
 
@@ -33,7 +31,8 @@ class StreamWatcherListener(tweepy.StreamListener):
 	    insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
             insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
             insert_data['processed'] = 0
-            db.hose.insert(insert_data)
+#            db.hose.insert(insert_data)
+            logger.info(data)
 	else:
             pass
 # 	    logger.info(data)
