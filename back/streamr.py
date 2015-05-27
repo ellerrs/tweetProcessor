@@ -13,29 +13,35 @@ import sys
 import tweepy
 import time
 import zc.lockfile
-
-
-#client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
-#db = client.twitter
+import psycopg2
 
 logger = logging.getLogger('streamr')
 
 class StreamWatcherListener(tweepy.StreamListener):
 
     def on_connect(self):
+        global db
         logger.info('Streaming connected and started')
+        try:
+            conn = psycopg2.connect("dbname=chatter user=chatter host=127.0.0.1 password=chatter")
+            conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+            db = conn.cursor()
+        except Exception, e:
+            logger.critical("Exception: %s" % str(e))
 
     def on_data(self, data):
+        global db
         insert_data = json.loads(data)
         if 'created_at' in insert_data:
-	    insert_data['bucket'] = datetime.datetime.now().strftime('%Y%m%d%H')
-            insert_data['timestamp'] = time.strftime('%Y%m%d%H%M%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-            insert_data['processed'] = 0
-#            db.hose.insert(insert_data)
-            logger.info(data)
+	    bucket    = datetime.datetime.now().strftime('%Y%m%d%H')
+	    dt        = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(insert_data['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+
+            try:
+                db.execute("INSERT INTO tweets (tweet, bucket, created) VALUES (%s, %s, %s)",(data,bucket,dt))
+            except Exception, e:
+		logger.critical("Exception: %s" % str(e))
 	else:
             pass
-# 	    logger.info(data)
 
     def on_error(self, status_code):
         logger.error("Status code: %s." % status_code)
