@@ -92,30 +92,28 @@ def dumpHourToDisk(hour, filename):
     global db
 
     db.execute("SELECT tweet from tweets where bucket = %s", (hour,))
-    
-    if db.rowcount == 0:
-        logger.info("No records found. Not creating a file for %s" % hour)
-    else:
-        logger.info("Found %s records. Creating file: %s" % (db.rowcount, filename))
-        
-        from ngramr import stop as ngstop
-        ngstop()
-        zc.lockfile.LockFile('/var/lock/ngramr')
+    output_file = open(filename, "w")
 
-        output_file = open(filename, "w")
+    while True:        
+        #from ngramr import stop as ngstop
+        #ngstop()
+        #zc.lockfile.LockFile('/var/lock/ngramr')
 
-        for record in db:
+	results = db.fetchmany(1000);
+
+	if not results:
+	    break
+        for record in results:
             output_file.write("%s" % record)
 
-        output_file.close()
+        logger.info("saved %s records to %s" % (1000, filename))
 
-        logger.info("saved %s records to %s" % (db.rowcount, filename))
+    output_file.close()
+    logger.info("purging records from db")
+    db.execute("DELETE from tweets where bucket = %s", (hour,))
 
-        logger.info("purging records from db")
-        db.execute("DELETE from tweets where bucket = %s", (hour,))
-
-        logger.info("clearing lock on ngramr")
-        os.remove('/var/lock/ngramr')
+        #logger.info("clearing lock on ngramr")
+        #os.remove('/var/lock/ngramr')
 
 
 def pushToS3():
