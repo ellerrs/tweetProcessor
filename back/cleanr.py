@@ -62,30 +62,11 @@ def start():
         timedif     = datetime.datetime.now() - datetime.timedelta(hours=24)
         lasthour    = timedif.strftime('%Y%m%d%H')
         
-        db.execute("SELECT tweet from tweets where bucket = %s limit 10", (lasthour,))
-        for record in db:
-            print record
+        logger.info("getting bucket from %s" % (lasthour))
 
-
-        # for x in db.buckets.find({}).sort([('_id', 1)]):
-        #     if ((x['unprocessed'] == 0) and (x['_id'] <> lasthour )):
-        #         logger.info("bucket %s ready " % x['_id'])
-
-        #         from ngramr import stop as ngstop
-        #         ngstop()
-        #         zc.lockfile.LockFile('/var/lock/ngramr')
- 
-        #         filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
-        #         s3filename = config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
-        #         dumpHourToDisk(x['_id'], filename)
-        #         pushToS3()
-
-        #         logger.info("clearing lock on ngramr")
-        #         os.remove('/var/lock/ngramr')
-
-
-        #     else:
-        #         logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
+        filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.gz'
+        dumpHourToDisk(lasthour, filename)
+        pushToS3()
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
         time.sleep(600) 
@@ -108,24 +89,40 @@ def stop():
 
 
 def dumpHourToDisk(hour, filename):
+    global db
+
+    db.execute("SELECT tweet from tweets where bucket = %s", (hour,))
     
-    records = db.hose.find({'bucket':hour}).count()
-    
-    if records == 0:
+    if db.rowcount == 0:
         logger.info("No records found. Not creating a file for %s" % hour)
     else:
-        logger.info("Found %s records. Creating file: %s" % (records, filename))
-        systemCall = "mongoexport --quiet --username " + config.MONGO_USER + " --password " + config.MONGO_PASS + " --authenticationDatabase " + config.MONGO_DB + " --db " + config.MONGO_DB + " --collection hose --query '{\"bucket\":\"" + hour + "\"}' | gzip > " + filename
-        os.system(systemCall)
-        db.hose.remove({'bucket': hour})
-        logger.info("saved %s records to %s" % (records, filename))
+        logger.info("Found %s records. Creating file: %s" % (db.rowcount, filename))
+        
+        from ngramr import stop as ngstop
+        ngstop()
+        zc.lockfile.LockFile('/var/lock/ngramr')
+
+        output_file = open(filename, "w")
+
+        for record in db:
+            output_file.write("%s" % record)
+
+        output_file.close()
+
+        logger.info("saved %s records to %s" % (db.rowcount, filename))
+
+        logger.info("purging records from db")
+        db.execute("DELETE from tweets where bucket = %s", (hour,))
+
+        logger.info("clearing lock on ngramr")
+        os.remove('/var/lock/ngramr')
 
 
 def pushToS3():
 
     for file in os.listdir(config.TWITTER_FILE_PATH):
 
-        if file.endswith(".txt.gz"):
+        if file.endswith(".gz"):
 
             if os.path.isfile(config.TWITTER_FILE_PATH + '' + file):
 
@@ -141,11 +138,3 @@ def pushToS3():
 
             else:
                 logger.info("Nothing to push. %s is missing" % file)
-
-
-def purgeDB(hour):
-
-    records = db.hose.find({'bucket':hour}).count();
-    logger.info("removing bucket: %s. Found %s records" % (hour, records))
-    db.hose.remove({'bucket': hour})
-
