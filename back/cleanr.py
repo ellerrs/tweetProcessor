@@ -10,16 +10,13 @@ import logging
 import json
 import operator
 import os
-from pymongo import MongoClient
 import signal
 import sys
 import time
 import tweepy
 import urllib
 import zc.lockfile
-
-client = MongoClient('mongodb://' + config.MONGO_USER + ':' + config.MONGO_PASS + '@' + config.MONGO_HOST + '/' + config.MONGO_DB)
-db = client.twitter 
+import psycopg2
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logger = logging.getLogger('cleanr')
@@ -41,6 +38,7 @@ def health():
 
 
 def start():
+    global db
     global updated
     global inserted    
 
@@ -51,33 +49,43 @@ def start():
         logger.warning("another cleanr running")
         sys.exit()
 
+    try:
+        conn = psycopg2.connect("dbname=chatter user=chatter host=127.0.0.1 password=chatter")
+        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        db = conn.cursor()
+    except Exception, e:
+        logger.critical("Exception: %s" % str(e))
+
 
     while True:
 
-        timedif     = datetime.datetime.now() - datetime.timedelta(hours=0)
+        timedif     = datetime.datetime.now() - datetime.timedelta(hours=24)
         lasthour    = timedif.strftime('%Y%m%d%H')
-        logger.info("updating bucket list")
-        db.hose.aggregate([{"$group":{"_id":'$bucket',"processed":{"$sum":{"$cond":[{"$eq":['$processed',1]},1,0]}},"unprocessed":{"$sum":{"$cond":[{"$eq":['$processed',0]},1,0]}}}}, {"$out": "buckets"}])
         
-        for x in db.buckets.find({}).sort([('_id', 1)]):
-            if ((x['unprocessed'] == 0) and (x['_id'] <> lasthour )):
-                logger.info("bucket %s ready " % x['_id'])
+        db.execute("SELECT tweet from tweets where bucket = %s limit 10", (lasthour,))
+        for record in db:
+            print record
 
-                from ngramr import stop as ngstop
-                ngstop()
-                zc.lockfile.LockFile('/var/lock/ngramr')
+
+        # for x in db.buckets.find({}).sort([('_id', 1)]):
+        #     if ((x['unprocessed'] == 0) and (x['_id'] <> lasthour )):
+        #         logger.info("bucket %s ready " % x['_id'])
+
+        #         from ngramr import stop as ngstop
+        #         ngstop()
+        #         zc.lockfile.LockFile('/var/lock/ngramr')
  
-                filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
-                s3filename = config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
-                dumpHourToDisk(x['_id'], filename)
-                pushToS3()
+        #         filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
+        #         s3filename = config.TWITTER_FILE_PREFIX + x['_id'] + '.txt.gz'
+        #         dumpHourToDisk(x['_id'], filename)
+        #         pushToS3()
 
-                logger.info("clearing lock on ngramr")
-                os.remove('/var/lock/ngramr')
+        #         logger.info("clearing lock on ngramr")
+        #         os.remove('/var/lock/ngramr')
 
 
-            else:
-                logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
+        #     else:
+        #         logger.info("bucket %s not ready. %s unprocessed" % (x['_id'], x['unprocessed']))
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
         time.sleep(600) 
