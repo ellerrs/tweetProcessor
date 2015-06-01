@@ -41,11 +41,10 @@ def start():
     global db
     global updated
     global inserted    
-
+    
     try:
-        zc.lockfile.LockFile('/var/lock/cleanr')
-        logger.info("started")
-    except:
+        lock = zc.lockfile.LockFile('/var/lock/cleanr')
+    except Exception, e:
         logger.warning("another cleanr running")
         sys.exit()
 
@@ -56,17 +55,23 @@ def start():
     except Exception, e:
         logger.critical("Exception: %s" % str(e))
 
+    logger.info("started")
 
     while True:
 
         timedif     = datetime.datetime.now() - datetime.timedelta(hours=24)
         lasthour    = timedif.strftime('%Y%m%d%H')
         
-        logger.info("getting bucket from %s" % (lasthour))
+        logger.info("getting bucket from %s or before" % (lasthour))
 
-        filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + lasthour + '.gz'
-        dumpHourToDisk(lasthour, filename)
-        pushToS3()
+        db.execute("select distinct bucket from tweets where bucket <= %s", (lasthour,))
+        results = db.fetchmany(1000);
+
+        for bucket in results:
+            logger.info("processing %s" % (bucket))
+            filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + str(bucket[0]) + '.gz'
+            dumpHourToDisk(str(bucket[0]), filename)
+#            pushToS3()
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
         time.sleep(600) 
@@ -91,9 +96,9 @@ def stop():
 def dumpHourToDisk(hour, filename):
     global db
 
-    db.execute("SELECT tweet from tweets where bucket = %s", (hour,))
-    output_file = open(filename, "w")
-
+    db.execute("SELECT tweet from tweets where bucket = %s", (int(hour),))
+    output_file = gzip.open(filename, "wb")
+ 
     while True:        
         #from ngramr import stop as ngstop
         #ngstop()
@@ -103,12 +108,13 @@ def dumpHourToDisk(hour, filename):
 
 	if not results:
 	    break
+
         for record in results:
-            output_file.write("%s" % record)
+            output_file.write("%s" % str(record[0]))
 
         logger.info("saved %s records to %s" % (1000, filename))
-
     output_file.close()
+
     logger.info("purging records from db")
     db.execute("DELETE from tweets where bucket = %s", (hour,))
 
