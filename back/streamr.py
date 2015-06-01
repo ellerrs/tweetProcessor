@@ -71,7 +71,6 @@ def start():
 
     try: 
         zc.lockfile.LockFile('/var/lock/streamr')
-        logger.info("started")
     except:
         logger.warning("another streamr running")
         sys.exit()
