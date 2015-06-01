@@ -61,17 +61,24 @@ def start():
 
         timedif     = datetime.datetime.now() - datetime.timedelta(hours=24)
         lasthour    = timedif.strftime('%Y%m%d%H')
+
+	db.execute("select bucket, count(*) as c from tweets group by bucket")
+	results = db.fetchall()
+
+        for row in results:
+            db.execute("select update_counts(%s,%s)", (int(row[0]), int(row[1]),))
+
         
         logger.info("getting bucket from %s or before" % (lasthour))
 
-        db.execute("select distinct bucket from tweets where bucket <= %s", (lasthour,))
-        results = db.fetchmany(1000);
+        db.execute("select bucket from bucket_history where bucket <= %s", (lasthour,))
+        results = db.fetchmany(1000)
 
         for bucket in results:
             logger.info("processing %s" % (bucket))
             filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + str(bucket[0]) + '.gz'
             dumpHourToDisk(str(bucket[0]), filename)
-#            pushToS3()
+            pushToS3()
 
         logger.info("all processed buckets moved. sleeping for 10 minutes.")
         time.sleep(600) 
