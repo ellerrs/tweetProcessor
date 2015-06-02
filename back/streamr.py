@@ -70,7 +70,7 @@ def health():
 def start():
 
     try: 
-        zc.lockfile.LockFile('/var/lock/streamr')
+        lock = zc.lockfile.LockFile('/var/lock/streamr')
     except:
         logger.warning("another streamr running")
         sys.exit()

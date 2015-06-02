@@ -25,12 +25,12 @@ def usage():
 
 def healthCheck():        
 
-    from ngramr import health as nh
-    if(nh()):
-        logger.info("ngramr UP")
-    else:
-        logger.info("ngramr DOWN - restarting")
-        ngramrStart()
+#    from ngramr import health as nh
+#    if(nh()):
+#        logger.info("ngramr UP")
+#    else:
+#        logger.info("ngramr DOWN - restarting")
+#        ngramrStart()
 
     from cleanr import health as ch
     if(ch()):
@@ -45,6 +45,7 @@ def healthCheck():
     else:
         logger.info("streamr DOWN - restarting")
         streamrStart()
+ 
     sys.exit()
 
 

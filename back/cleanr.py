@@ -62,17 +62,19 @@ def start():
         timedif     = datetime.datetime.now() - datetime.timedelta(hours=24)
         lasthour    = timedif.strftime('%Y%m%d%H')
 
+        logger.info("updating buckets")
+
 	db.execute("select bucket, count(*) as c from tweets group by bucket")
 	results = db.fetchall()
 
         for row in results:
             db.execute("select update_counts(%s,%s)", (int(row[0]), int(row[1]),))
-
+            #logger.info("%s %s" % (row[0], row[1],))
         
         logger.info("getting bucket from %s or before" % (lasthour))
 
-        db.execute("select bucket from bucket_history where bucket <= %s", (lasthour,))
-        results = db.fetchmany(1000)
+        db.execute("select bucket from bucket_history where archived = %s and bucket <= %s", (False, lasthour,))
+        results = db.fetchall()
 
         for bucket in results:
             logger.info("processing %s" % (bucket))
@@ -105,7 +107,7 @@ def dumpHourToDisk(hour, filename):
 
     db.execute("SELECT tweet from tweets where bucket = %s", (int(hour),))
     output_file = gzip.open(filename, "wb")
- 
+    x=0
     while True:        
         #from ngramr import stop as ngstop
         #ngstop()
@@ -118,13 +120,14 @@ def dumpHourToDisk(hour, filename):
 
         for record in results:
             output_file.write("%s" % str(record[0]))
+            x = x + 1
 
-        logger.info("saved %s records to %s" % (1000, filename))
+    logger.info("saved %s records to %s" % (x, filename))
     output_file.close()
 
     logger.info("purging records from db")
     db.execute("DELETE from tweets where bucket = %s", (hour,))
-
+    db.execute("UPDATE bucket_history SET archived=%s where bucket = %s", (True, hour,))
         #logger.info("clearing lock on ngramr")
         #os.remove('/var/lock/ngramr')
 
