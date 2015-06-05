@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>        
+        <!-- META SECTION -->
+        {% block head %}
+        <title>{% block title %}{% endblock %} - IronKip</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        
+        <link rel="icon" href="favicon.ico" type="image/x-icon" />
+        <!-- END META SECTION -->
+        
+        <!-- CSS INCLUDE -->        
+        <link rel="stylesheet" type="text/css" id="theme" href="static/css/theme-default.css"/>
+        <!-- EOF CSS INCLUDE -->
+        {% endblock %}
+    </head>
+    <body>
+        <!-- START PAGE CONTAINER -->
+        <div class="page-container">
+            
+            <!-- START PAGE SIDEBAR -->
+            <div class="page-sidebar">
+                <!-- START X-NAVIGATION -->
+                <ul class="x-navigation">
+                    <li class="xn-logo">
+                        <a href="/">IronKip</a>
+                        <a href="#" class="x-navigation-control"></a>
+                    </li>                                                                      
+                    <li class="xn-title">Navigation</li>
+                    {% if current_user.is_authenticated() %}
+                        <li>
+                            <a href="/">
+                                <i class="fa fa-desktop"></i> <span class="xn-text">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="xn-openable">
+                                <a href="#"><span class="fa fa-user"></span>{{ current_user.first_name }}'s Profile</a>
+                                <ul>                                    
+                                    <li><a href="/logout" class='mb-control' data-box="#message-box-logout"><i class='fa fa-sign-out'></i> Logout</li></a>
+                                    <li><a href="pages-login-website.html">Website Login</a></li>
+                                    <li><a href="pages-login-website-light.html"> Website Login Light</a></li>
+                                </ul>
+                            </li> 
+                    {% else %}
+                        <li>
+                            <a href="/login">
+                                <i class="fa fa-sign-in"></i> <span class="xn-text">Login</span>
+                            </a>
+                        </li>   
+                    {% endif %}
+                                                            
+                </ul>
+                <!-- END X-NAVIGATION -->
+            </div>
+            <!-- END PAGE SIDEBAR -->
+            
+            <!-- PAGE CONTENT -->
+            <div class="page-content">
+                
+                <!-- START X-NAVIGATION VERTICAL -->
+                <ul class="x-navigation x-navigation-horizontal x-navigation-panel">
+                    <!-- TOGGLE NAVIGATION -->
+                    <li class="xn-icon-button">
+                        <a href="#" class="x-navigation-minimize"><span class="fa fa-dedent"></span></a>
+                    </li>
+                    <!-- END TOGGLE NAVIGATION -->                    
+                </ul>
+                <!-- END X-NAVIGATION VERTICAL -->                     
+                
+                <!-- START BREADCRUMB -->
+                <ul class="breadcrumb">
+                    <li><a href="#">Link</a></li>                    
+                    <li class="active">Active</li>
+                </ul>
+                <!-- END BREADCRUMB -->                
+                
+                <div class="page-title">                    
+                    <h2><span class="fa fa-arrow-circle-o-left"></span> {% block page_title %}{% endblock %}</h2>
+                </div>                   
+                
+                <!-- PAGE CONTENT WRAPPER -->
+                <div class="page-content-wrap">
+                
+                    <div class="row">
+                        <div class="col-md-12">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div role='alert' class="alert alert-{{ category }}">
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span aria-hidden="true">&times;</span>
+                                        <span class="sr-only">Close</span>
+                                    </button>
+                                    <strong>{{ message }}</strong>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                        {% block content %}{% endblock %}
+                        <!-- content -->
+
+                        </div>
+                    </div>
+                
+                </div>
+                <!-- END PAGE CONTENT WRAPPER -->                
+            </div>            
+            <!-- END PAGE CONTENT -->
+            <div>
+                {% block footer %}{% endblock %}
+            </div>
+        </div>
+        <!-- END PAGE CONTAINER -->
+
+        <!-- warning -->
+        <div class="message-box message-box-warning animated fadeIn" id="message-box-logout">
+            <div class="mb-container">
+                <div class="mb-middle">
+                    <div class="mb-title"><span class="fa fa-warning"></span> Logout?</div>
+                    <div class="mb-content">Are you super sure you want to do that?</div>
+                    <div class="mb-footer">
+                        <a href="/logout" class="btn btn-danger pull-right btn-lg btn-ok">Logout</a>
+                        <button class="btn btn-default btn-lg pull-right mb-control-close">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end warning -->
+        
+    <!-- START SCRIPTS -->
+        <!-- START PLUGINS -->
+        <script type="text/javascript" src="static/js/plugins/jquery/jquery.min.js"></script>
+        <script type="text/javascript" src="static/js/plugins/jquery/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="static/js/plugins/bootstrap/bootstrap.min.js"></script>        
+        <!-- END PLUGINS -->
+
+        <!-- THIS PAGE PLUGINS -->
+
+        <!-- END PAGE PLUGINS -->         
+
+        <!-- START TEMPLATE -->
+        <script type="text/javascript" src="static/js/plugins.js"></script>        
+        <script type="text/javascript" src="static/js/actions.js"></script>        
+        <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->         
+    </body>
+</html>
+
+
+
+
+
+
