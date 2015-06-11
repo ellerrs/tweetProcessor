@@ -355,7 +355,7 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
       "assert assume require print println printf readLine readBoolean readByte readShort " +
       "readChar readInt readLong readFloat readDouble " +
 
-      "AnyVal App Application Array BufferedIterator BigDecimal BigInt Char Console Either " +
+      "AnyVal frontApplication Array BufferedIterator BigDecimal BigInt Char Console Either " +
       "Enumeration Equiv Error Exception Fractional Function IndexedSeq Integral Iterable " +
       "Iterator List Map Numeric Nil NotNull Option Ordered Ordering PartialFunction PartialOrdering " +
       "Product Proxy Range Responder Seq Serializable Set Specializable Stream StringBuilder " +
