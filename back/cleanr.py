@@ -59,7 +59,7 @@ def start():
 
     while True:
 
-        timedif     = datetime.datetime.now() - datetime.timedelta(hours=12)
+        timedif     = datetime.datetime.now() - datetime.timedelta(hours=6)
         lasthour    = timedif.strftime('%Y%m%d%H')
 
         logger.info("updating buckets")
@@ -69,7 +69,6 @@ def start():
 
         for row in results:
             db.execute("select update_counts(%s,%s)", (int(row[0]), int(row[1]),))
-            #logger.info("%s %s" % (row[0], row[1],))
         
         logger.info("getting bucket from %s or before" % (lasthour))
 
@@ -78,7 +77,7 @@ def start():
 
         for bucket in results:
             logger.info("processing %s" % (bucket))
-            filename = config.TWITTER_FILE_PATH + config.TWITTER_FILE_PREFIX + str(bucket[0]) + '.gz'
+            filename = '/tmp/' + config.TWITTER_FILE_PREFIX + str(bucket[0]) + '.gz'
             dumpHourToDisk(str(bucket[0]), filename)
             pushToS3()
 
@@ -105,50 +104,31 @@ def stop():
 def dumpHourToDisk(hour, filename):
     global db
 
-    db.execute("SELECT tweet from tweets where bucket = %s", (int(hour),))
-    output_file = gzip.open(filename, "wb")
-    x=0
-    while True:        
-        #from ngramr import stop as ngstop
-        #ngstop()
-        #zc.lockfile.LockFile('/var/lock/ngramr')
-
-	results = db.fetchmany(1000);
-
-	if not results:
-	    break
-
-        for record in results:
-            output_file.write("%s" % str(record[0]))
-            x = x + 1
-
-    logger.info("saved %s records to %s" % (x, filename))
-    output_file.close()
+    db.execute("COPY (select tweet from tweets where bucket = %s) TO %s (format text)", (int(hour),str(filename),))
+    logger.info("saved records to %s" % (filename,))
 
     logger.info("purging records from db")
     db.execute("DELETE from tweets where bucket = %s", (hour,))
     db.execute("UPDATE bucket_history SET archived=%s where bucket = %s", (True, hour,))
-        #logger.info("clearing lock on ngramr")
-        #os.remove('/var/lock/ngramr')
 
 
 def pushToS3():
 
-    for file in os.listdir(config.TWITTER_FILE_PATH):
+    for file in os.listdir('/tmp/'):
 
         if file.endswith(".gz"):
 
-            if os.path.isfile(config.TWITTER_FILE_PATH + '' + file):
+            if os.path.isfile('/tmp/' + file):
 
                 conn = S3Connection(config.S3AUTH, config.S3KEY)
                 bucket = conn.get_bucket(config.S3BUCKET)
 
                 key = bucket.new_key(file)
-                key.set_contents_from_filename(config.TWITTER_FILE_PATH + '' + file)
+                key.set_contents_from_filename('/tmp/' + file)
                 logger.info("Pushing %s to %s" % (file, config.S3BUCKET))
 
                 logger.info("Deleting %s" % file)
-                os.unlink(config.TWITTER_FILE_PATH + '' + file)
+                os.unlink('/tmp/' + file)
 
             else:
                 logger.info("Nothing to push. %s is missing" % file)
