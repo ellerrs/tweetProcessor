@@ -1,5 +1,5 @@
-from app import db
-from app.models.base import Base
+from front import db
+from front.models.base import Base
 
 
 class User(Base):

@@ -2,9 +2,9 @@
 from flask import Blueprint, request, render_template, \
                   flash, g, session, redirect, url_for
 from werkzeug import check_password_hash, generate_password_hash
-from app import db, login_manager, login_user, login_required, current_user, logout_user, logging
-from app.forms.login import LoginForm, SignupForm
-from app.models.user import User
+from front import db, login_manager, login_user, login_required, current_user, logout_user, logging
+from front.forms.login import LoginForm, SignupForm
+from front.models.user import User
 
 mod_auth = Blueprint('auth', __name__)
 
