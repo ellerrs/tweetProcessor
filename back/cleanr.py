@@ -59,7 +59,7 @@ def start():
 
     while True:
 
-        timedif     = datetime.datetime.now() - datetime.timedelta(hours=6)
+        timedif     = datetime.datetime.now() - datetime.timedelta(hours=12)
         lasthour    = timedif.strftime('%Y%m%d%H')
 
         logger.info("updating buckets")
