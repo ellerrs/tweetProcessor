@@ -40,6 +40,9 @@ class StreamWatcherListener(tweepy.StreamListener):
                 db.execute("INSERT INTO tweets (tweet, bucket, created) VALUES (%s, %s, %s)",(data,bucket,dt))
             except Exception, e:
 		logger.critical("Exception: %s" % str(e))
+                stop()
+                time.sleep(10)
+                start()
 	else:
             pass
 
